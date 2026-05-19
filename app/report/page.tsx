@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import bayanaBg from "../../public/bayana-bg.jpg.jpg";
+import ruralNamaste from "../../public/rural_namaste.png";
 
 export default function ReportPage() {
   const [step, setStep] = useState(0); // 0 is welcome screen
@@ -18,6 +21,7 @@ export default function ReportPage() {
     name: "",
     phone: "",
   });
+  const [media, setMedia] = useState<File | null>(null);
 
   const showFeedbackAndNext = (nextStep: number, msg: string) => {
     setFeedback(msg);
@@ -38,17 +42,17 @@ export default function ReportPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Append duration to description to maintain CSV structure without changing backend
-      const finalDescription = formData.duration 
-        ? `[कब से: ${formData.duration}] ${formData.description}` 
-        : formData.description;
-        
-      const payload = { ...formData, description: finalDescription };
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, String(value));
+      });
+      if (media) {
+        formDataToSend.append("media", media);
+      }
       
       const response = await fetch('/api/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: formDataToSend,
       });
 
       if (response.ok) {
@@ -69,15 +73,21 @@ export default function ReportPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center relative bg-slate-50 font-sans p-4">
       {/* Background Image with Light Overlay */}
-      <div 
-        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1627896157734-4bcbf12eaf74?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center bg-fixed bg-no-repeat opacity-40"
-        aria-hidden="true"
-      ></div>
+      <div className="absolute inset-0 z-0">
+        <Image
+          src={bayanaBg}
+          alt="Bayana Background"
+          fill
+          priority
+          placeholder="blur"
+          className="object-cover opacity-40"
+        />
+      </div>
       <div className="absolute inset-0 bg-white/80"></div>
 
       <div className="relative z-10 w-full max-w-lg">
@@ -128,7 +138,16 @@ export default function ReportPage() {
             {step === 0 && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
                 {/* 📸 1. WELCOME SCREEN */}
-                <img src="/rural_namaste.png" alt="Welcome Namaste" className="w-full h-48 object-cover rounded-2xl mb-6 shadow-sm border border-slate-200" />
+                <div className="relative w-full h-48 mb-6 rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+                  <Image 
+                    src={ruralNamaste} 
+                    alt="Welcome Namaste" 
+                    fill
+                    priority
+                    placeholder="blur"
+                    className="object-cover" 
+                  />
+                </div>
                 
                 <h2 className="text-3xl font-extrabold text-slate-800 mb-4 leading-tight">
                   नमस्ते!<br/>हम आपकी बात सुनने के लिए यहां हैं
@@ -245,41 +264,8 @@ export default function ReportPage() {
               </div>
             )}
 
-            {/* Step 4: Duration */}
+            {/* Step 4: Description */}
             {step === 4 && (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-3">यह परेशानी कब से है?</h2>
-                <p className="text-slate-500 mb-6 text-lg">समय बताने से मदद जल्दी मिल सकती है</p>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  {["हाल ही में (1-2 दिन)", "कुछ समय से (1 हफ्ता)", "काफी समय से (महीनों से)"].map((duration) => (
-                    <button
-                      key={duration}
-                      onClick={() => {
-                        updateForm("duration", duration);
-                        showFeedbackAndNext(5, "👍 समझ गए");
-                      }}
-                      className="py-5 px-6 rounded-2xl border-2 border-slate-200 text-xl font-bold transition-all text-left flex items-center justify-between hover:border-green-600 hover:bg-green-50 active:scale-95 text-slate-700"
-                    >
-                      <span>{duration}</span>
-                      <span className="text-2xl">⏳</span>
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => {
-                      updateForm("duration", "पता नहीं");
-                      showFeedbackAndNext(5, "✅ ठीक है");
-                    }}
-                    className="py-4 mt-2 bg-transparent border-2 border-slate-200 hover:bg-slate-50 text-slate-600 active:scale-95 font-bold text-lg rounded-2xl transition-all"
-                  >
-                    यह छोड़ सकते हैं (Skip)
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Description */}
-            {step === 5 && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full">
                 <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-3">अपनी परेशानी बताएं</h2>
                 <p className="text-slate-500 mb-4 text-lg">थोड़ा और खुलकर बताएं, क्या हुआ है?</p>
@@ -297,7 +283,7 @@ export default function ReportPage() {
                   <button
                     onClick={() => {
                       if(formData.description.trim()) {
-                        showFeedbackAndNext(6, "👍 बहुत बढ़िया");
+                        showFeedbackAndNext(5, "👍 बहुत बढ़िया");
                       }
                     }}
                     disabled={!formData.description.trim()}
@@ -309,8 +295,95 @@ export default function ReportPage() {
               </div>
             )}
 
-            {/* Step 6: Identity */}
+            {/* Step 5: Duration */}
+            {step === 5 && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-3">यह परेशानी कब से है?</h2>
+                <p className="text-slate-500 mb-6 text-lg">समय बताने से मदद जल्दी मिल सकती है</p>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {["हाल ही में (1-2 दिन)", "कुछ समय से (1 हफ्ता)", "काफी समय से (महीनों से)"].map((duration) => (
+                    <button
+                      key={duration}
+                      onClick={() => {
+                        updateForm("duration", duration);
+                        showFeedbackAndNext(6, "👍 समझ गए");
+                      }}
+                      className="py-5 px-6 rounded-2xl border-2 border-slate-200 text-xl font-bold transition-all text-left flex items-center justify-between hover:border-green-600 hover:bg-green-50 active:scale-95 text-slate-700"
+                    >
+                      <span>{duration}</span>
+                      <span className="text-2xl">⏳</span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      updateForm("duration", "पता नहीं");
+                      showFeedbackAndNext(6, "✅ ठीक है");
+                    }}
+                    className="py-4 mt-2 bg-transparent border-2 border-slate-200 hover:bg-slate-50 text-slate-600 active:scale-95 font-bold text-lg rounded-2xl transition-all"
+                  >
+                    यह छोड़ सकते हैं (Skip)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 6: Media Upload */}
             {step === 6 && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col h-full">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-3">
+                  अगर आप चाहें तो समस्या की फोटो या वीडियो भी जोड़ सकते हैं
+                </h2>
+                <p className="text-slate-500 mb-6 text-lg">(यह वैकल्पिक है)</p>
+
+                <div className="border-4 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-3xl p-8 mb-4 text-center relative transition-colors flex-grow flex flex-col justify-center items-center">
+                  <input 
+                    type="file" 
+                    accept="image/*,video/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setMedia(e.target.files[0]);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  
+                  {media ? (
+                    <div className="flex flex-col items-center">
+                      <span className="text-4xl mb-2">✅</span>
+                      <span className="text-lg font-bold text-slate-700">{media.name}</span>
+                      <span className="text-sm text-slate-500 mt-1">बदलने के लिए क्लिक करें</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center pointer-events-none">
+                      <span className="text-5xl mb-3">📷</span>
+                      <span className="text-xl font-bold text-slate-700">फोटो / वीडियो अपलोड करें</span>
+                      <span className="text-sm text-slate-500 mt-2">टैप करें या फाइल चुनें</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 mt-auto">
+                  <button
+                    onClick={() => showFeedbackAndNext(7, "👍 बहुत बढ़िया")}
+                    disabled={!media}
+                    className="w-full py-4 bg-blue-700 hover:bg-blue-800 disabled:bg-slate-200 disabled:text-slate-400 active:scale-95 text-white font-bold text-xl rounded-2xl transition-all shadow-md"
+                  >
+                    अपलोड करें और आगे बढ़ें
+                  </button>
+                  <button
+                    onClick={() => showFeedbackAndNext(7, "✅ कोई बात नहीं")}
+                    className="w-full py-4 bg-transparent border-2 border-slate-200 hover:bg-slate-50 text-slate-600 active:scale-95 font-bold text-lg rounded-2xl transition-all"
+                  >
+                    छोड़ें (Skip)
+                  </button>
+                  <p className="text-center text-slate-400 text-sm mt-1">आप बिना फोटो के भी आगे बढ़ सकते हैं</p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 7: Identity */}
+            {step === 7 && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-3">अंतिम चरण!</h2>
                 <p className="text-slate-500 mb-6 text-lg">क्या आप अपना नाम देना चाहेंगे?</p>

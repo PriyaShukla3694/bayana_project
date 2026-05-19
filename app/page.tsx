@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import bayanaBg from "../public/bayana-bg.jpg.jpg";
 
 export default function Home() {
   return (
@@ -6,10 +8,16 @@ export default function Home() {
       className="min-h-screen flex flex-col items-center justify-center relative bg-slate-900 overflow-hidden"
     >
       {/* Background Image with Dark Overlay */}
-      <div
-        className="absolute inset-0 bg-[url('/bayana-bg.jpg.jpg')] bg-cover bg-center bg-no-repeat"
-        aria-hidden="true"
-      ></div>
+      <div className="absolute inset-0 z-0">
+        <Image
+          src={bayanaBg}
+          alt="Bayana Background"
+          fill
+          priority
+          placeholder="blur"
+          className="object-cover"
+        />
+      </div>
       <div className="absolute inset-0 bg-black/60"></div>
 
       {/* Main Content Container */}
@@ -31,6 +39,7 @@ export default function Home() {
           {/* CTA Button */}
           <Link
             href="/report"
+            prefetch={true}
             className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-green-700 hover:bg-green-800 text-white text-xl font-bold rounded-xl transition-all shadow-lg hover:shadow-xl focus:ring-4 focus:ring-green-700/30 active:scale-[0.98]"
           >
             <span>समस्या दर्ज करें</span>
